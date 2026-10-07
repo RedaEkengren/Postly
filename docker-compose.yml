@@ -1,0 +1,119 @@
+# Production stack on the Hetzner host (archetype D, ADR-019). Not deployed yet
+# -- see DEPLOY.md. For local development use infra/docker-compose.yml.
+#
+# PostgreSQL is external, reached through DATABASE_URL (provider: issue #11);
+# it is not a service here. KumoMTA delivers the mail (ADR-020). `.env` on the host holds the secrets and APP_IMAGE, the
+# SHA-tagged image the deploy wrote. Roll back by editing APP_IMAGE, never by
+# pulling `latest`.
+
+x-app: &app
+  image: ${APP_IMAGE:?APP_IMAGE must name a SHA-tagged image}
+  env_file: .env
+  environment:
+    REDIS_URL: redis://redis:6379
+    # kumod runs in the host's network namespace and listens on this
+    # network's gateway, which is private to the host.
+    KUMO_SMTP_HOST: 172.28.0.1
+    KUMO_SMTP_PORT: "2525"
+    KUMO_HTTP_URL: http://172.28.0.1:8000
+  networks: [postly]
+  restart: unless-stopped
+
+x-kumo: &kumo
+  image: ghcr.io/kumocorp/kumomta:2026.06.23-f3af1cd0
+  env_file: .env
+  volumes:
+    - ./deploy/kumomta:/opt/kumomta/etc/policy:ro
+  # Host networking: the sending IPs are the host's, and port 25 must be
+  # reachable for asynchronous bounces and feedback reports.
+  network_mode: host
+  restart: unless-stopped
+
+services:
+  # Runs to completion before anything else starts, so no container serves a
+  # schema older than its code.
+  migrate:
+    <<: *app
+    command: ["node", "api/dist/migrate.js"]
+    restart: "no"
+
+  api:
+    <<: *app
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      # /health is 503 unless the database, Redis and the workers all answer.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  workers:
+    <<: *app
+    command: ["node", "workers/dist/index.js"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    # BullMQ waits for active jobs on SIGTERM; a webhook delivery can take up
+    # to its 10 s timeout. Compose's default is 10 s.
+    stop_grace_period: 30s
+
+  kumod:
+    <<: *kumo
+    depends_on:
+      tsa: { condition: service_started }
+    environment:
+      POSTLY_API_URL: http://127.0.0.1:3000
+      KUMO_HOSTNAME: ${KUMO_HOSTNAME:?KUMO_HOSTNAME must match the sending IPs' PTR}
+      KUMO_INJECT_LISTEN: 172.28.0.1:2525
+      KUMO_INJECT_RELAY_HOSTS: 172.28.0.0/24
+      KUMO_HTTP_LISTEN: 172.28.0.1:8000
+      KUMO_TSA_URL: http://127.0.0.1:8008
+    volumes:
+      - ./deploy/kumomta:/opt/kumomta/etc/policy:ro
+      # The spool holds accepted mail that is not delivered yet. Losing it
+      # loses mail, so it is a named volume and part of the backup plan.
+      - kumo_spool:/var/spool/kumomta
+      - kumo_logs:/var/log/kumomta
+    # KumoMTA finishes in-flight SMTP sessions on shutdown.
+    stop_grace_period: 60s
+    # No healthcheck here (the image has no curl); the API's /health reports
+    # KumoMTA's liveness, so the deploy gate covers it.
+
+  tsa:
+    <<: *kumo
+    command: ["/opt/kumomta/sbin/tsa-daemon", "--policy", "/opt/kumomta/etc/policy/tsa_init.lua"]
+    volumes:
+      - ./deploy/kumomta:/opt/kumomta/etc/policy:ro
+      - kumo_tsa:/var/spool/kumomta
+
+  redis:
+    image: redis:7-alpine
+    networks: [postly]
+    # BullMQ requires noeviction: an evicted key is a lost job.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  postly:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
+
+volumes:
+  redis_data:
+  kumo_spool:
+  kumo_logs:
+  kumo_tsa:

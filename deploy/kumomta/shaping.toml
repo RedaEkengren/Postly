@@ -1,0 +1,19 @@
+# Postly's additions to KumoMTA's built-in shaping rules
+# (/opt/kumomta/share/policy-extras/shaping.toml), loaded after them.
+
+# The log hook's own queue: without this block the default per-domain limits
+# (10 connections, 100/s) would throttle delivery events back to the API.
+["postly.log_hook"]
+mx_rollup = false
+connection_limit = 16
+max_ready = 80000
+
+# Gmail's rate-limit deferral (421 4.7.28, "… has detected an unusual rate …").
+# The community rules match an older wording and sit under provider."gmail",
+# which the built-in file does not define; this matches the current wording on
+# the provider the built-in file does define. Checked against KumoMTA
+# 2026.06.23: `resolve-shaping-domain gmail.com` resolves to provider "google".
+[[provider."google".automation]]
+regex = "4\\.7\\.28|has detected an unusual rate"
+action = "Suspend"
+duration = "1 hour"

@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/dist
+**/.turbo
+**/.next
+**/.tanstack
+**/coverage
+.env
+.env.*
+*.md
+docs
+infra
+scripts

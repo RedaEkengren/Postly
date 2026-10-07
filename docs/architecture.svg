@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="470" viewBox="0 0 860 470" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <rect width="860" height="470" rx="10" fill="#fbfdfc"/>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3f6f63"/>
+    </marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa6a2"/>
+    </marker>
+  </defs>
+
+  <text x="30" y="36" font-size="15" font-weight="600" fill="#17251f">How a send travels</text>
+  <text x="30" y="56" font-size="12" fill="#5d6b66">Postgres is the source of truth. Redis is only a work queue.</text>
+
+  <!-- Client -->
+  <rect x="30" y="86" width="132" height="54" rx="7" fill="#ffffff" stroke="#c7d2cd"/>
+  <text x="96" y="110" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Your app</text>
+  <text x="96" y="127" font-size="11" text-anchor="middle" fill="#5d6b66">SDK, CLI or REST</text>
+
+  <!-- API -->
+  <rect x="214" y="78" width="188" height="70" rx="7" fill="#ffffff" stroke="#3f6f63" stroke-width="1.6"/>
+  <text x="308" y="101" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">API (Hono)</text>
+  <text x="308" y="118" font-size="11" text-anchor="middle" fill="#5d6b66">validate, idempotency,</text>
+  <text x="308" y="133" font-size="11" text-anchor="middle" fill="#5d6b66">render template, store</text>
+
+  <!-- Postgres -->
+  <rect x="214" y="196" width="188" height="56" rx="7" fill="#ffffff" stroke="#c7d2cd"/>
+  <text x="308" y="219" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Postgres</text>
+  <text x="308" y="236" font-size="11" text-anchor="middle" fill="#5d6b66">messages, events, keys</text>
+
+  <!-- Redis -->
+  <rect x="454" y="196" width="166" height="56" rx="7" fill="#ffffff" stroke="#c7d2cd"/>
+  <text x="537" y="219" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Redis (BullMQ)</text>
+  <text x="537" y="236" font-size="11" text-anchor="middle" fill="#5d6b66">send queue</text>
+
+  <!-- Worker -->
+  <rect x="454" y="78" width="166" height="70" rx="7" fill="#ffffff" stroke="#3f6f63" stroke-width="1.6"/>
+  <text x="537" y="101" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Worker</text>
+  <text x="537" y="118" font-size="11" text-anchor="middle" fill="#5d6b66">DeliveryEngine</text>
+  <text x="537" y="133" font-size="11" text-anchor="middle" fill="#5d6b66">DKIM sign, VERP sender</text>
+
+  <!-- KumoMTA -->
+  <rect x="672" y="78" width="158" height="70" rx="7" fill="#ffffff" stroke="#3f6f63" stroke-width="1.6"/>
+  <text x="751" y="101" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">KumoMTA</text>
+  <text x="751" y="118" font-size="11" text-anchor="middle" fill="#5d6b66">our own MTA,</text>
+  <text x="751" y="133" font-size="11" text-anchor="middle" fill="#5d6b66">per-provider shaping</text>
+
+  <!-- Recipient -->
+  <rect x="672" y="330" width="158" height="54" rx="7" fill="#ffffff" stroke="#c7d2cd"/>
+  <text x="751" y="354" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Recipient MX</text>
+  <text x="751" y="371" font-size="11" text-anchor="middle" fill="#5d6b66">Gmail, Outlook, …</text>
+
+  <!-- Webhooks -->
+  <rect x="30" y="330" width="132" height="54" rx="7" fill="#ffffff" stroke="#c7d2cd"/>
+  <text x="96" y="354" font-size="12.5" font-weight="600" text-anchor="middle" fill="#17251f">Your webhook</text>
+  <text x="96" y="371" font-size="11" text-anchor="middle" fill="#5d6b66">HMAC signed</text>
+
+  <!-- Flow arrows -->
+  <line x1="162" y1="113" x2="208" y2="113" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="185" y="104" font-size="10" text-anchor="middle" fill="#5d6b66">202</text>
+
+  <line x1="308" y1="148" x2="308" y2="191" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="316" y="173" font-size="10" fill="#5d6b66">store first</text>
+
+  <line x1="402" y1="224" x2="449" y2="224" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="425" y="215" font-size="10" text-anchor="middle" fill="#5d6b66">queue</text>
+
+  <line x1="537" y1="191" x2="537" y2="153" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <line x1="620" y1="113" x2="667" y2="113" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+  <text x="643" y="104" font-size="10" text-anchor="middle" fill="#5d6b66">SMTP</text>
+
+  <line x1="751" y1="148" x2="751" y2="325" stroke="#3f6f63" stroke-width="1.6" marker-end="url(#a)"/>
+
+  <!-- Return path -->
+  <path d="M672 357 L430 357" stroke="#9aa6a2" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#b)"/>
+  <text x="551" y="349" font-size="10.5" text-anchor="middle" fill="#5d6b66">bounces and complaints, on your return-path subdomain</text>
+
+  <path d="M430 357 L308 357 L308 262" stroke="#9aa6a2" stroke-width="1.4" stroke-dasharray="4 3" fill="none" marker-end="url(#b)"/>
+  <text x="316" y="300" font-size="10.5" fill="#5d6b66">delivery events,</text>
+  <text x="316" y="315" font-size="10.5" fill="#5d6b66">correlated by VERP</text>
+
+  <path d="M214 357 L167 357" stroke="#9aa6a2" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#b)"/>
+
+  <!-- Reputation note -->
+  <rect x="454" y="412" width="376" height="36" rx="6" fill="#eef4f1" stroke="#d3e0da"/>
+  <text x="470" y="435" font-size="11" fill="#2c4a42">Every event feeds suppressions and the reputation check, which pauses sending.</text>
+
+  <text x="30" y="435" font-size="11" fill="#5d6b66">No open or click</text>
+  <text x="30" y="449" font-size="11" fill="#5d6b66">tracking, by design.</text>
+</svg>

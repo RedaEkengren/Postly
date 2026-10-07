@@ -1,0 +1,14 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  bcrypt: true
+  esbuild: true
+  msgpackr-extract: true
+  sharp: true
+  unrs-resolver: true
+# Transitive dependencies pinned above a vulnerable version. Each line names
+# who pulls it in, so it can be dropped once they catch up.
+overrides:
+  # mjml -> htmlnano -> cssnano -> browserslist; 4.28.2 has a HIGH advisory.
+  browserslist: ^4.28.7
